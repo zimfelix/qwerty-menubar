@@ -26,5 +26,5 @@ codesign --verify --deep --strict "$APP"
 ARCH="$(uname -m)"
 ZIP="dist/QWERTY-Menu-Bar-macOS-${ARCH}.zip"
 ditto -c -k --sequesterRsrc --keepParent "$APP" "$ZIP"
-shasum -a 256 "$ZIP" > "$ZIP.sha256"
+(cd dist && shasum -a 256 "$(basename "$ZIP")" > "$(basename "$ZIP").sha256")
 echo "Built $APP and $ZIP"
