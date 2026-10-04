@@ -1,0 +1,14 @@
+altgraph==0.17.5
+iniconfig==2.3.0
+macholib==1.16.4
+modulegraph==0.19.7
+packaging==26.3
+pillow==12.3.0
+pluggy==1.6.0
+py2app==0.28.10
+Pygments==2.21.0
+pyobjc-core==12.2.2
+pyobjc-framework-Cocoa==12.2.2
+pytest==9.1.1
+ruff==0.16.10
+setuptools==80.9.0

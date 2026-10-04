@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=80,<81"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qwerty-menubar"
+version = "0.1.0"
+description = "A quiet, native macOS menu-bar QWERTY keyboard reference."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["pyobjc-framework-Cocoa>=12.2,<13; sys_platform == 'darwin'"]
+
+[project.scripts]
+qwerty-menubar = "qwerty_menubar.app:main"
+
+[tool.setuptools]
+packages = ["qwerty_menubar"]
+
+[tool.setuptools.package-data]
+qwerty_menubar = ["assets/*.png", "assets/*.icns"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
