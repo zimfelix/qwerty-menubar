@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 from qwerty_menubar.constants import BUNDLE_ID
-from qwerty_menubar.shortcuts import Shortcut, ShortcutError
+from qwerty_menubar.shortcuts import DEFAULT_SHORTCUT, Shortcut, ShortcutError
 
 
 class PreferencesError(ValueError):
@@ -23,7 +23,7 @@ class Preferences:
 
     def load_shortcut(self):
         if not self.path.exists():
-            return None
+            return DEFAULT_SHORTCUT  # explicit saved null still means "hotkey disabled"
         try:
             value = json.loads(self.path.read_text())
             if (

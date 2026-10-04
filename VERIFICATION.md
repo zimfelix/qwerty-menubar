@@ -1,5 +1,19 @@
 # Prüfungen
 
+## v1.0.0 — Standard-Hotkey, Design und Installation
+
+Auf demselben Apple-Silicon-Mac wie v0.2.0 geprüft:
+
+- **77 pytest-Tests bestanden**. Neue Prüfungen: `cmd+ctrl+shift+p` bei fehlenden Einstellungen; bestehende eigene und ausdrücklich deaktivierte Hotkeys bleiben erhalten; geglättete Bildkante erhält weiße Beschriftungen im Inneren.
+- Ruff, Formatierung, Shell-Syntax und `git diff --check` ohne Befunde. Lokale Dokumentationslinks geprüft.
+- Standardkürzel `⌃⇧⌘P` mit echter nativer Konfliktprüfung registriert und wieder freigegeben. Keine Benutzer-Einstellungen geändert. Das ist ein API-Nachweis, kein realer globaler Tastendruck.
+- Native Recorder-Selektoren erneut mit isolierten Testeinstellungen geprüft: gültiges Kürzel speichern, Systemkonflikt ablehnen, alte Belegung behalten, Kürzel entfernen. Native Papierkorb-API erneut nur mit temporärer App-Kopie geprüft.
+- Native Prüfwerkzeuge starten jetzt mit eigenen, ausdrücklich deaktivierten Test-Hotkeys und laden keine Benutzer-Belegung beim Bootstrap.
+- Tastaturkante auf dunklem Hintergrund vorher/nachher visuell verglichen: helle JPEG-Randpixel entfernt. Native AppKit-Vorschau der Kopfzeile und des Zahnrads normal/gedrückt geprüft: 36-Punkt-Klickfläche, 22-Punkt-Symbol, neutral graue statt grüne Rückmeldung. Diese Ansicht wurde über natives View-Caching gerendert, nicht als vollständiger Desktop-Klickablauf geprüft.
+- Standalone-Build mit Bundle-Version **1.0.0**, Mindestversion **macOS 26**, erfolgreicher strenger Ad-hoc-Signaturprüfung und gültiger ZIP-Prüfsumme. Nach lokaler Installation über LaunchServices gestartet; Prozess läuft.
+
+**Weiterhin offen:** Vollständige sichtbare Menü-/Recorder-/Hotkey-Benutzerabläufe, echte Login-Item-Freigabe mit Ab-/Anmeldung, Deinstallations-Bestätigungsdialog und Gatekeeper auf einem frisch eingerichteten anderen Mac. Keine neue Langzeit-/Intel-/ältere-macOS-Prüfung. Nicht mit Apple Developer ID signiert oder notarisiert; Bildrechte weiterhin ungeklärt. v1.0.0 bedeutet keine vollständige Konflikt- oder Kompatibilitätsgarantie.
+
 ## v0.2.0 — Einstellungen und globale Hotkeys
 
 Geprüft am 4. Oktober 2026 auf demselben Apple-Silicon-Mac (macOS 27.0.1, Python 3.14.7, PyObjC 12.2.2). Die native Login-Item-API setzt macOS 13 voraus; der konkrete Download-Build weiterhin macOS 26+.
@@ -92,4 +106,4 @@ Die Skripte verwenden bewusst grobe Regression-Budgets von 160 MiB RSS, weniger 
 - Standardverhalten „Klick außerhalb schließt“ wird von `NSPopoverBehaviorTransient` bereitgestellt, wurde nicht gesondert als realer Klickablauf dokumentiert.
 - Lokaler, ad-hoc signierter Build geprüft. Apple Developer ID, Notarisierung und der komplette Gatekeeper-Ablauf auf einem anderen, frisch eingerichteten Mac sind nicht geprüft.
 - Die optionale GitHub-Actions-Prüfung ist ausschließlich manuell auslösbar und wurde nicht gestartet, um keine potenziell kostenpflichtigen Runner-Minuten zu verbrauchen.
-- Bildrechte für eine öffentliche Veröffentlichung sind ungeklärt; privates Repository und private Releases.
+- Bildrechte für eine öffentliche Weiterverbreitung sind weiterhin ungeklärt. Beim v0.1.0-Nachweis waren Repository und Releases privat; seit v0.2.0 ist das Repository auf ausdrücklichen Wunsch öffentlich. Die MIT-Lizenz schließt das Foto weiterhin aus.

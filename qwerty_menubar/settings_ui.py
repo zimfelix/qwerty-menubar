@@ -91,7 +91,7 @@ class ShortcutWindow(NSObject):
             "Falls macOS den Tastendruck abfängt: manuell eingeben.", (24, 227, 362, 19), 11
         )
         self.manual = NSTextField.alloc().initWithFrame_(NSMakeRect(24, 193, 264, 27))
-        self.manual.setPlaceholderString_("ctrl+alt+cmd+k")
+        self.manual.setPlaceholderString_("cmd+ctrl+shift+p")
         self.manual.setAccessibilityLabel_("Tastenkombination manuell eingeben")
         self.manual.setTarget_(self)
         self.manual.setAction_("submitManual:")

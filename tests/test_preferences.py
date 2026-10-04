@@ -3,13 +3,27 @@ import json
 import pytest
 
 from qwerty_menubar.preferences import Preferences, PreferencesError
-from qwerty_menubar.shortcuts import parse_shortcut
+from qwerty_menubar.shortcuts import DEFAULT_SHORTCUT, parse_shortcut
 
 
-def test_missing_preferences_default_to_no_hotkey(tmp_path):
+def test_new_installation_defaults_to_command_control_shift_p(tmp_path):
     preferences = Preferences(tmp_path / "settings.json")
-    assert preferences.load_shortcut() is None
+    assert preferences.load_shortcut() == DEFAULT_SHORTCUT
+    assert DEFAULT_SHORTCUT == parse_shortcut("cmd+ctrl+shift+p")
     assert not preferences.path.exists()
+
+
+def test_explicitly_disabled_hotkey_is_not_reset_to_default(tmp_path):
+    preferences = Preferences(tmp_path / "settings.json")
+    preferences.save_shortcut(None)
+    assert preferences.load_shortcut() is None
+
+
+def test_existing_custom_hotkey_is_not_replaced_by_new_default(tmp_path):
+    preferences = Preferences(tmp_path / "settings.json")
+    custom = parse_shortcut("ctrl+alt+cmd+j")
+    preferences.save_shortcut(custom)
+    assert preferences.load_shortcut() == custom
 
 
 def test_preferences_roundtrip_and_clear(tmp_path):

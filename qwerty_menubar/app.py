@@ -8,12 +8,15 @@ from AppKit import (
     NSApp,
     NSApplication,
     NSApplicationActivationPolicyAccessory,
-    NSButton,
+    NSBox,
+    NSBoxSeparator,
     NSColor,
     NSFont,
+    NSFontWeightMedium,
     NSImage,
     NSImageAlignCenter,
     NSImageScaleProportionallyUpOrDown,
+    NSImageSymbolConfiguration,
     NSImageView,
     NSMakeRect,
     NSMakeSize,
@@ -34,6 +37,7 @@ from Foundation import NSBundle
 from qwerty_menubar.constants import BUNDLE_ID, HEADER_HEIGHT
 from qwerty_menubar.layout import PADDING, asset_path, popover_size
 from qwerty_menubar.settings import SettingsMenu
+from qwerty_menubar.ui_controls import SettingsButton
 
 
 class AppDelegate(NSObject):
@@ -89,17 +93,23 @@ class AppDelegate(NSObject):
         controller.setView_(NSView.alloc().initWithFrame_(NSMakeRect(0, 0, 1, 1)))
         controller.view().addSubview_(self.image_view)
         self.header_label = NSTextField.labelWithString_("QWERTY")
-        self.header_label.setFont_(NSFont.systemFontOfSize_(12))
-        self.header_label.setTextColor_(NSColor.secondaryLabelColor())
+        self.header_label.setFont_(NSFont.systemFontOfSize_weight_(14, NSFontWeightMedium))
+        self.header_label.setTextColor_(NSColor.labelColor())
         controller.view().addSubview_(self.header_label)
-        self.settings_button = NSButton.alloc().initWithFrame_(NSMakeRect(0, 0, 26, 26))
-        self.settings_button.setImage_(
-            NSImage.imageWithSystemSymbolName_accessibilityDescription_(
-                "gearshape", "Einstellungen"
-            )
+        self.header_separator = NSBox.alloc().initWithFrame_(NSMakeRect(0, 0, 1, 1))
+        self.header_separator.setBoxType_(NSBoxSeparator)
+        controller.view().addSubview_(self.header_separator)
+        self.settings_button = (
+            SettingsButton.alloc().initWithFrame_(NSMakeRect(0, 0, 36, 36)).configure()
         )
-        self.settings_button.setBordered_(False)
-        self.settings_button.setContentTintColor_(NSColor.secondaryLabelColor())
+        symbol = NSImage.imageWithSystemSymbolName_accessibilityDescription_(
+            "gearshape", "Einstellungen"
+        )
+        configuration = NSImageSymbolConfiguration.configurationWithPointSize_weight_(
+            22, NSFontWeightMedium
+        )
+        self.settings_button.setImage_(symbol.imageWithSymbolConfiguration_(configuration))
+        self.settings_button.setContentTintColor_(NSColor.labelColor())
         self.settings_button.setToolTip_("Einstellungen")
         self.settings_button.setAccessibilityLabel_("Einstellungen")
         self.settings_button.setTarget_(self)
@@ -115,8 +125,13 @@ class AppDelegate(NSObject):
         self.image_view.setFrame_(
             NSMakeRect(PADDING, PADDING, width - 2 * PADDING, image_height - 2 * PADDING)
         )
-        self.header_label.setFrame_(NSMakeRect(PADDING, height - 30, 160, 20))
-        self.settings_button.setFrame_(NSMakeRect(width - PADDING - 26, height - 32, 26, 26))
+        self.header_label.setFrame_(
+            NSMakeRect(PADDING + 4, height - (HEADER_HEIGHT + 20) / 2, 160, 20)
+        )
+        self.settings_button.setFrame_(
+            NSMakeRect(width - PADDING - 36, height - (HEADER_HEIGHT + 36) / 2, 36, 36)
+        )
+        self.header_separator.setFrame_(NSMakeRect(PADDING, image_height, width - 2 * PADDING, 1))
 
     @objc.python_method
     def display_screen(self):

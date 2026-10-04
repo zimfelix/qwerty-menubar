@@ -140,6 +140,9 @@ class Shortcut:
         return cls(**value)
 
 
+DEFAULT_SHORTCUT = Shortcut(35, COMMAND | CONTROL | SHIFT, "P")
+
+
 def from_event(keycode, flags, characters):
     modifiers = sum(
         carbon

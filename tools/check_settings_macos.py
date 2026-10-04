@@ -5,6 +5,7 @@ import tempfile
 import time
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from AppKit import NSApplication, NSApplicationActivationPolicyAccessory, NSStatusBar, NSWorkspace
 from Foundation import NSURL, NSDate, NSRunLoop
@@ -75,16 +76,19 @@ def main():
     app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
     delegate = AppDelegate.alloc().init()
     app.setDelegate_(delegate)
-    delegate.applicationDidFinishLaunching_(None)
-    try:
-        with tempfile.TemporaryDirectory(prefix="qwerty-settings-check-") as directory:
-            folder = Path(directory)
+    with tempfile.TemporaryDirectory(prefix="qwerty-settings-check-") as directory:
+        folder = Path(directory)
+        preferences = Preferences(folder / "settings.json")
+        preferences.save_shortcut(None)  # never register the user's/default hotkey in a test
+        with patch("qwerty_menubar.settings.Preferences", return_value=preferences):
+            delegate.applicationDidFinishLaunching_(None)
+        try:
             check_recorder(delegate, folder)
             check_recycle(folder)
-    finally:
-        delegate.settings.close()
-        NSStatusBar.systemStatusBar().removeStatusItem_(delegate.status_item)
-        app.setDelegate_(None)
+        finally:
+            delegate.settings.close()
+            NSStatusBar.systemStatusBar().removeStatusItem_(delegate.status_item)
+            app.setDelegate_(None)
 
 
 if __name__ == "__main__":

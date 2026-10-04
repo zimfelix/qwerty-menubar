@@ -2,4 +2,4 @@
 
 BUNDLE_ID = "dev.zimfelix.qwerty-menubar"
 APP_NAME = "QWERTY Menu Bar"
-HEADER_HEIGHT = 38
+HEADER_HEIGHT = 48

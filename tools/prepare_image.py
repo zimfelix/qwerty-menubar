@@ -4,7 +4,7 @@ import argparse
 from collections import deque
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
 
 def is_background(pixel: tuple[int, ...]) -> bool:
@@ -30,6 +30,22 @@ def remove_background(image: Image.Image) -> Image.Image:
             continue
         pixels[x, y] = (0, 0, 0, 0)
         queue.extend(((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)))
+    return result
+
+
+def clean_edges(image: Image.Image, inset: int = 2) -> Image.Image:
+    """Trim the JPEG's white fringe, then antialias only the outer silhouette."""
+    padding = inset + 2
+    alpha = ImageOps.expand(image.getchannel("A"), border=padding, fill=0)
+    alpha = alpha.filter(ImageFilter.MinFilter(2 * inset + 1))
+    alpha = alpha.filter(ImageFilter.GaussianBlur(0.4))
+    alpha = alpha.crop((padding, padding, padding + image.width, padding + image.height))
+    edge = alpha.point(lambda value: 255 if 0 < value < 255 else 0)
+    color = image.convert("RGB")
+    # Remove isolated bright JPEG pixels only in the antialiased boundary band.
+    color = Image.composite(color.filter(ImageFilter.MinFilter(3)), color, edge)
+    result = color.convert("RGBA")
+    result.putalpha(alpha)
     return result
 
 
@@ -75,7 +91,7 @@ def main():
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     with Image.open(args.source) as source:
-        cleaned = remove_background(source)
+        cleaned = clean_edges(remove_background(source))
     cleaned.save(args.output / "keyboard.png", optimize=True)
     create_icons(args.output)
     print(f"Prepared {cleaned.width} × {cleaned.height} transparent image in {args.output}")

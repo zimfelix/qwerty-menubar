@@ -1,7 +1,7 @@
 from PIL import Image
 
 from qwerty_menubar.layout import asset_path
-from tools.prepare_image import is_background, remove_background
+from tools.prepare_image import clean_edges, is_background, remove_background
 
 
 def test_border_white_is_removed_but_key_legends_are_preserved():
@@ -32,6 +32,18 @@ def test_packaged_photo_is_transparent_only_outside_keyboard():
         assert image.getpixel((500, 200))[3] == 255
         transparent = sum(alpha == 0 for alpha in image.getchannel("A").get_flattened_data())
         assert 1000 < transparent < image.width * image.height * 0.15
+
+
+def test_edge_cleanup_preserves_interior_legends_and_softens_outline():
+    image = Image.new("RGBA", (24, 24), (0, 0, 0, 0))
+    for x in range(2, 22):
+        for y in range(2, 22):
+            image.putpixel((x, y), (60, 60, 60, 255))
+    image.putpixel((12, 12), (255, 255, 255, 255))
+    cleaned = clean_edges(image)
+    assert cleaned.getpixel((0, 0))[3] == 0
+    assert cleaned.getpixel((12, 12)) == (255, 255, 255, 255)
+    assert any(0 < value < 255 for value in cleaned.getchannel("A").get_flattened_data())
 
 
 def test_status_icon_has_alpha_and_retina_resolution():

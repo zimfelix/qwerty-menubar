@@ -5,7 +5,10 @@ import json
 import os
 import resource
 import subprocess
+import tempfile
 import time
+from pathlib import Path
+from unittest.mock import patch
 
 import objc
 from AppKit import (
@@ -22,6 +25,7 @@ from AppKit import (
 from Foundation import NSDate, NSRunLoop
 
 from qwerty_menubar.app import AppDelegate
+from qwerty_menubar.preferences import Preferences
 
 
 def pump(seconds):
@@ -43,8 +47,12 @@ def create_delegate(display_id):
     app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
     delegate = AppDelegate.alloc().init()
     app.setDelegate_(delegate)
-    app.finishLaunching()
-    delegate.applicationDidFinishLaunching_(None)
+    with tempfile.TemporaryDirectory(prefix="qwerty-popover-check-") as directory:
+        preferences = Preferences(Path(directory) / "settings.json")
+        preferences.save_shortcut(None)  # do not register a real/default user hotkey
+        with patch("qwerty_menubar.settings.Preferences", return_value=preferences):
+            app.finishLaunching()
+            delegate.applicationDidFinishLaunching_(None)
     pump(0.5)  # let AppKit attach the status-item scene
     screen = next(
         s for s in NSScreen.screens() if s.deviceDescription()["NSScreenNumber"] == display_id
