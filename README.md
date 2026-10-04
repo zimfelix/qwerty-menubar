@@ -1,100 +1,117 @@
 # QWERTY Menu Bar
 
-Eine kleine **Python-App für die macOS-Menüleiste**: Tastatur-Icon anklicken, QWERTY-Layout einer Logitech-Mini-Tastatur nachsehen, weiterarbeiten.
+Eine kleine **native Python-App für die macOS-Menüleiste**: Tastatur-Icon anklicken, QWERTY-Layout einer Logitech-Mini-Tastatur nachsehen, weiterarbeiten.
 
-- Native AppKit-Oberfläche, kein Electron und kein Browser.
-- Nur das Tastaturbild im Popover, proportional skaliert und mit transparentem Hintergrund.
-- Linksklick öffnet/schließt; Klick außerhalb oder Escape schließt. Rechtsklick → **Beenden**.
-- Passt sich dem Bildschirm an; das Menüleisten-Icon unterstützt Hell-/Dunkelmodus.
-- Kein Dock-Icon, kein Tastaturmitschnitt, keine Bedienungshilfen-/Input-Monitoring-Berechtigung.
-- Keine Netzwerkzugriffe, Timer, Hintergrundjobs oder automatischen Login-Einträge.
-- Eine Instanz, ein bei Bedarf geladenes und anschließend wiederverwendetes Bild.
+## Bedienung
 
-Das ist eine **Layout-Referenz**, kein Remapping-Werkzeug. Die aufgedruckten Mac-/Windows-/Fn-Belegungen sind sichtbar; tatsächliche Shortcuts hängen von macOS, App und Tastaturkonfiguration ab. Die App ändert weder das Systemlayout noch Tastenkombinationen.
+- **Linksklick** auf das Menüleisten-Icon öffnet/schließt das freigestellte Tastaturbild.
+- **Zahnrad oben rechts im Popover** öffnet das kleine Einstellungsmenü. Alternativ: Rechtsklick auf das Menüleisten-Icon.
+- **Autostart · Aus/Ein:** native macOS-Anmeldeobjekte, standardmäßig aus. Bei notwendiger macOS-Freigabe zeigt das Menü den echten Status und einen Link zu den Systemeinstellungen.
+- **Tastenkürzel:** Aufnahme per Tastendruck oder manuelle Eingabe, zum Beispiel `ctrl+alt+cmd+k` / `⌃⌥⌘K`. Das Kürzel blendet die Tastatur global ein/aus.
+- **Beenden:** beendet nur die App; ein bewusst aktivierter Autostart bleibt für die nächste Anmeldung erhalten.
+- **Deinstallieren …:** ausdrückliche Bestätigung, danach die laufende `.app` in den Papierkorb verschieben und eigenen Autostart, Hotkey und Einstellungen entfernen. Quellprojekt und GitHub-Repo bleiben unberührt. Abbrechen ist die sichere Standardaktion.
+
+Kein Dock-Icon, kein Electron, kein Browser, keine Netzwerklogik und keine Polling-Timer. Ein bei Bedarf geladenes Bild wird wiederverwendet. Die App liest keine allgemeinen Tastatureingaben mit und benötigt keine Bedienungshilfen-/Input-Monitoring-Freigabe. Der Recorder verarbeitet Eingaben nur in seinem eigenen Fenster.
+
+Die Tastatur ist eine **Layout-Referenz**, kein Remapping-Werkzeug. Die App ändert weder das Systemlayout noch bestehende Systemkürzel.
+
+## Hotkeys und Konfliktprüfung
+
+Vor dem Speichern werden geprüft:
+
+1. Unterstützte Taste plus mindestens `⌘`, `⌃` oder `⌥`; zusätzliche Modifier wie `⇧` sind möglich. Reine Modifier/Fn allein werden nicht unterstützt.
+2. Aktivierte macOS-Systemkürzel über `CopySymbolicHotKeys` — einschließlich Standardbelegungen, nicht nur Änderungen aus einer Preferences-Datei.
+3. Konservativ reservierte übliche App-/Textkürzel, etwa `⌘C`, `⌘Q` und `⌘⇧Z`.
+4. Konflikte mit exklusiv registrierten globalen Hotkeys über eine kurzzeitige Carbon-Registrierungsprüfung.
+
+**Wichtige Grenze:** macOS stellt kein vollständiges Verzeichnis aller Kürzel anderer Apps bereit. Nicht-exklusive globale Registrierungen, Event-Tap-Hotkeys und app-interne Kürzel lassen sich nicht zuverlässig ausschließen. Die endgültige Registrierung ist deshalb **nicht exklusiv** und verdrängt keine vorhandene geteilte Registrierung. Vollständige Konfliktfreiheit wird nicht versprochen.
+
+Wenn macOS oder eine andere App einen Tastendruck bereits abfängt, kann der lokale Recorder ihn nicht bekommen. Dafür gibt es das manuelle Eingabefeld. Manuelle Zeichennamen beziehen sich auf QWERTY-Tastenpositionen; die Aufnahme zeigt die Beschriftung des aktuellen Eingabelayouts. Die gespeicherte Kombination verwendet einen physischen macOS-Keycode.
+
+Ein abgelehntes Kürzel oder fehlgeschlagenes Speichern lässt die bisherige Belegung unverändert. Einstellungen werden atomar in einer kleinen JSON-Datei gespeichert; nach Neustart wird ein gespeichertes Kürzel erneut geprüft. Gehaltene Tasten lösen keinen ständigen Ein-/Aus-Wechsel aus.
 
 ## Installation ohne Python
 
-1. In den [Releases](https://github.com/zimfelix/qwerty-menubar/releases) die passende macOS-ZIP herunterladen. Private Releases benötigen einen angemeldeten GitHub-Account mit Repository-Zugriff.
-2. ZIP entpacken und **QWERTY Menu Bar.app** nach `~/Applications` oder `/Applications` ziehen.
+1. Im [Release v0.2.0](https://github.com/zimfelix/qwerty-menubar/releases/tag/v0.2.0) die macOS-ZIP herunterladen.
+2. Entpacken und **QWERTY Menu Bar.app** nach `~/Applications` oder `/Applications` ziehen.
 3. App öffnen. Das kleine Tastatur-Icon erscheint rechts in der Menüleiste.
 
-Die erste Veröffentlichung benötigt **Apple Silicon (arm64) und macOS 26 oder neuer**. Intel-Macs und ältere macOS-Versionen benötigen einen passenden eigenen Python-/App-Build. Ein Internetzugang oder installiertes Python ist nach dem Download nicht nötig.
-
-Alternativ mit bereits angemeldeter GitHub CLI:
+Der hier erstellte Download benötigt **Apple Silicon (arm64) und macOS 26 oder neuer**. Python und Bibliotheken sind enthalten. Ein Internetzugang oder installiertes Python ist nach dem Download nicht nötig. Intel-/ältere-macOS-Builds wurden nicht geprüft.
 
 ```bash
-gh release download v0.1.0 --repo zimfelix/qwerty-menubar --pattern '*.zip' --dir ~/Downloads
+gh release download v0.2.0 --repo zimfelix/qwerty-menubar --pattern '*.zip' --dir ~/Downloads
 ```
-
-Danach die ZIP entpacken und die `.app` wie oben installieren.
 
 ### Gatekeeper
 
-Der Build ist **ad-hoc signiert, nicht mit einer Apple Developer ID signiert oder notarisiert**. Bei heruntergeladenen Builds kann macOS eine Sicherheitsbestätigung verlangen: Öffnungsversuch, anschließend **Systemeinstellungen → Datenschutz & Sicherheit → Dennoch öffnen**, sofern angeboten. Nur für ein selbst gebautes oder vertrauenswürdiges Release bestätigen. Keine globale Gatekeeper-Abschaltung und kein automatisches Entfernen von Quarantäne-Attributen.
+Der Build ist **ad-hoc signiert, nicht mit einer Apple Developer ID signiert oder notarisiert**. Bei heruntergeladenen Builds kann macOS eine ausdrückliche Sicherheitsbestätigung verlangen: Öffnungsversuch, anschließend **Systemeinstellungen → Datenschutz & Sicherheit → Dennoch öffnen**, sofern angeboten. Nur für ein selbst gebautes oder vertrauenswürdiges Release bestätigen. Keine globale Gatekeeper-Abschaltung und kein automatisches Entfernen von Quarantäne-Attributen.
 
-## Aus dem Quellcode starten
+## Entwicklung
 
-Benötigt macOS und Python 3.12 oder neuer:
+Quellcode benötigt Python 3.12+ und macOS 13+ (der konkrete Python-Build kann eine neuere macOS-Version voraussetzen):
 
 ```bash
-git clone git@github.com:zimfelix/qwerty-menubar.git
+git clone https://github.com/zimfelix/qwerty-menubar.git
 cd qwerty-menubar
 python3 -m venv .venv
 .venv/bin/python -m pip install -e .
 .venv/bin/python -m qwerty_menubar
 ```
 
-Im Laufzeitpfad wird nur PyObjC/Cocoa zusätzlich zu Python benötigt. Pillow und py2app sind reine Entwicklungs-/Build-Abhängigkeiten.
-
-## Selbstständige .app bauen und lokal installieren
+Autostart und Deinstallation sind im Quellstart absichtlich deaktiviert: Die App darf weder den Python-Interpreter als Login-Item einrichten noch dessen Bundle entfernen.
 
 ```bash
 ./scripts/build.sh
 ./scripts/install.sh
 ```
 
-Der Build enthält Python und die benötigten Bibliotheken; die installierte `.app` benötigt weder Repository noch `.venv`. Ergebnis: `dist/QWERTY Menu Bar.app` plus ZIP und SHA-256-Datei. Installation erfolgt ohne Administratorrechte nach `~/Applications`; kein Login-Item wird eingerichtet. Vor Updates die laufende App beenden und die alte Kopie verschieben.
+Ergebnis: `dist/QWERTY Menu Bar.app`, ZIP und SHA-256-Datei. Die installierte App läuft unabhängig von Repository und `.venv`. Das Installationsskript richtet keinen Autostart ein. Vor Updates die App beenden und die alte Kopie verschieben; bestehende Installationen werden nicht ungefragt überschrieben.
 
-## Entwicklung und Prüfungen
+## Prüfungen
 
 ```bash
 .venv/bin/python -m pip install -r requirements-build.txt
 .venv/bin/pytest -q
 .venv/bin/ruff check .
 .venv/bin/ruff format --check .
+.venv/bin/python -m tools.check_hotkeys_macos
+.venv/bin/python -m tools.check_settings_macos
 ```
 
-**Aktueller Nachweis:** 23 Logik-/Asset-Tests bestanden; 150 native Öffnen-/Schließen-Zyklen mit etwa 0,31 MiB RSS-Zuwachs; installierte App mit etwa 42–43 MiB physischem Speicher-Footprint. Messverfahren, tatsächliche UI-Prüfungen und Grenzen stehen in [VERIFICATION.md](VERIFICATION.md).
+Native Prüfwerkzeuge verwenden vorübergehende Hotkey-Registrierungen bzw. eigene temporäre Einstellungen und eine temporäre App-Kopie. Sie aktivieren keinen Autostart und deinstallieren nicht die Benutzer-App.
 
-Native UI- und Ressourcenprüfungen benötigen einen angemeldeten macOS-Desktop und einen bewusst gewählten Testmonitor. Grüne Logiktests sind kein Nachweis für Gatekeeper, alle Displays oder langfristigen Speicherverbrauch. Die optionale GitHub-Actions-Prüfung läuft nur auf manuellen Aufruf; bei privaten Repositories können macOS-Runner-Minuten kostenpflichtig sein.
-
-Die Bildvorbereitung ist reproduzierbar, wenn das bereitgestellte Original vorhanden ist:
-
-```bash
-.venv/bin/python tools/prepare_image.py /path/to/original.jpg
-```
-
-Nur randverbundene, nahezu weiße Pixel werden entfernt — nicht weiße Beschriftungen innerhalb der Tastatur.
+Aktuelle Ergebnisse und klare Nachweisgrenzen stehen in [VERIFICATION.md](VERIFICATION.md). Sichtbare Tests benötigen einen entsperrten Desktop und einen bewusst gewählten Monitor. Die optionale GitHub-Actions-Prüfung ist nur manuell auslösbar; private macOS-Runner-Minuten können kostenpflichtig sein.
 
 ## Aufbau
 
 ```text
-Menüleisten-Klick → AppKit-Popover → transparentes PNG
-                               ↳ einmal laden, danach wiederverwenden
-
-Python + PyObjC → py2app → eigenständig startbare .app
+Menüleisten-Klick / globaler Hotkey → AppKit-Popover → PNG + Zahnrad
+                                                           ↓
+                                                     Settings-Menü
+                                ┌──────────────────────────┼────────────────────┐
+                                ↓                          ↓                    ↓
+                         SMAppService               Hotkey-Prüfung        Papierkorb
+                         Anmeldeobjekt              + JSON-Datei          nach Bestätigung
 ```
 
-- `qwerty_menubar/app.py`: native Oberfläche und Instanzschutz
-- `qwerty_menubar/layout.py`: Größenberechnung und Asset-Suche
-- `tools/prepare_image.py`: Freistellung und Icons, nur bei der Entwicklung
-- `scripts/`: Build und Installation
-- `tests/`: nachvollziehbare automatische Prüfungen
+- `app.py`: Menüleisten-Icon, Popover und Ereignissteuerung
+- `settings.py` / `settings_ui.py`: Einstellungsmenü und kompakter Recorder
+- `shortcuts.py` / `hotkeys.py`: Datenmodell, Konfliktregeln und native Registrierung
+- `preferences.py` / `lifecycle.py`: atomare Einstellungen, Login-Items und sichere Bundle-Prüfung
+- `layout.py` / `assets/`: Größenberechnung, fertiges Bild und Icons
+- `tools/`, `scripts/`, `tests/`: Bildvorbereitung, Build, Installation und Prüfungen
 
-## Deinstallation
+## Deinstallation / gespeicherte Dateien
 
-Rechtsklick auf das Icon → **Beenden**, anschließend die `.app` löschen. Optional den leeren Instanz-Lock unter `~/Library/Caches/dev.zimfelix.qwerty-menubar` entfernen. Keine Dienste oder Login-Einträge müssen entfernt werden.
+Bevorzugt Zahnrad → **Deinstallieren …**. Die App liegt anschließend im Papierkorb. Das Quellprojekt bleibt bestehen.
+
+Eigene Daten liegen unter:
+
+- `~/Library/Application Support/dev.zimfelix.qwerty-menubar/settings.json`
+- `~/Library/Caches/dev.zimfelix.qwerty-menubar/instance.lock`
+
+Bei manueller Deinstallation vorher Autostart ausschalten oder das Anmeldeobjekt in macOS entfernen, App beenden und `.app` sowie optional diese eigenen Dateien löschen.
 
 ## Lizenz und Bildrechte
 
-Der selbst erstellte Programmcode steht unter der MIT-Lizenz. Das bereitgestellte Logitech-Tastaturfoto (`qwerty_menubar/assets/keyboard.png`) ist **davon ausgenommen**; seine Veröffentlichungs-/Weiterverbreitungsrechte sind nicht geklärt. Logitech-Bezeichnungen bleiben Eigentum ihrer jeweiligen Rechteinhaber. Dieses Projekt ist nicht mit Logitech verbunden. Repository und Release bleiben deshalb zunächst privat.
+Der selbst erstellte Programmcode steht unter der MIT-Lizenz. Das bereitgestellte Logitech-Tastaturfoto (`qwerty_menubar/assets/keyboard.png`) ist **davon ausgenommen**; seine Weiterverbreitungsrechte sind nicht geklärt. Die öffentliche Sichtbarkeit des Repositories ist keine Erteilung von Bildrechten. Logitech-Bezeichnungen bleiben Eigentum ihrer Rechteinhaber; das Projekt ist nicht mit Logitech verbunden.

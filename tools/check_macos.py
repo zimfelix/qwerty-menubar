@@ -128,6 +128,7 @@ def main():
     finally:
         if delegate.popover:
             delegate.popover.close()
+        delegate.settings.close()
         NSStatusBar.systemStatusBar().removeStatusItem_(delegate.status_item)
         anchor.close()
         app.setDelegate_(None)

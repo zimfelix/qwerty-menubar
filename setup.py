@@ -22,7 +22,7 @@ else:
     project = tomllib.loads(Path("pyproject.toml").read_text())["project"]
     assets = list(map(str, Path("qwerty_menubar/assets").glob("*")))
     target = tuple(map(int, (get_config_var("MACOSX_DEPLOYMENT_TARGET") or "12.0").split(".")))
-    minimum_macos = ".".join(map(str, max((12, 0), target)))
+    minimum_macos = ".".join(map(str, max((13, 0), target)))
     setup(
         cmdclass={"py2app": StandaloneApp},
         app=["run.py"],

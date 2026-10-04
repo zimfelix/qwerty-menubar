@@ -9,6 +9,7 @@ py2app==0.28.10
 Pygments==2.21.0
 pyobjc-core==12.2.2
 pyobjc-framework-Cocoa==12.2.2
+pyobjc-framework-ServiceManagement==12.2.2
 pytest==9.1.1
 ruff==0.16.10
 setuptools==80.9.0

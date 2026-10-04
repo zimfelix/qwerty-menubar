@@ -1,4 +1,31 @@
-# Prüfung von v0.1.0
+# Prüfungen
+
+## v0.2.0 — Einstellungen und globale Hotkeys
+
+Geprüft am 4. Oktober 2026 auf demselben Apple-Silicon-Mac (macOS 27.0.1, Python 3.14.7, PyObjC 12.2.2). Die native Login-Item-API setzt macOS 13 voraus; der konkrete Download-Build weiterhin macOS 26+.
+
+- **74 pytest-Tests bestanden**, einschließlich Validierung/Kombinationen, aktivierten Systemkonflikten, konservativen App-Regeln, atomarem JSON-Speichern, Rücknahme fehlgeschlagener Registrierungen, Wiederholungsfilter, Login-Item-Status und sicherer Bundle-/Dateiprüfung.
+- Ruff und Formatierung geprüft.
+- Native `CopySymbolicHotKeys`-Abfrage: 234 Definitionen, davon 176 aktiviert. `⌘Leertaste` als echter macOS-Konflikt abgelehnt.
+- Echter Konflikt mit einem **zweiten Prozess und exklusiver Registrierung** erkannt. Gegenprobe mit nicht-exklusiver Registrierung zeigt die OS-Grenze: diese Konflikte werden nicht verlässlich gemeldet. Finale Registrierung bewusst geteilt, damit sie andere geteilte Registrierungen nicht verdrängt.
+- Native Recorder-Steuerung mit temporären Einstellungen: gültige Kombination gespeichert, macOS-Konflikt abgelehnt, alter Hotkey erhalten, Entfernen erfolgreich. Dabei native Controls/Selektoren aufgerufen, kein tatsächlicher physischer Tastendruck.
+- Native Papierkorb-API mit einer eigenen temporären `.app`-Kopie geprüft: nur Testkopie verschoben, Original erhalten und Testkopie danach aufgeräumt. Die Benutzer-App wurde nicht deinstalliert.
+- 100 native Popover-Lebenszyklen: RSS etwa 86,16 → 86,31 MiB, Zuwachs rund 0,16 MiB, anschließende Leerlauf-CPU etwa 0,103 %.
+- Kein Autostart aktiviert und kein globales Testkürzel dauerhaft hinterlassen. Autostart-API-Aufrufe/statusabhängige UI mit Test-Service geprüft; echte Registrierung plus Ab-/Anmeldung noch nicht nachgewiesen.
+
+**Noch offen:** Der Desktop wurde während der Arbeit gesperrt. Sichtbarer Zahnrad-/Menü-/Recorder-Ablauf, echte globale Tastendrücke, Login-Item-Freigabe/Anmeldung und der reale Deinstallations-Bestätigungsdialog sind daher nicht abschließend als Benutzerablauf geprüft. Kein Versprechen vollständiger Hotkey-Konfliktfreiheit oder vollständiger UI-/Langzeit-/Kompatibilitätsabdeckung.
+
+Reproduzierbare native Prüfungen, ohne die Benutzer-App zu deinstallieren oder Autostart einzurichten:
+
+```bash
+.venv/bin/python -m tools.check_hotkeys_macos
+.venv/bin/python -m tools.check_settings_macos
+.venv/bin/python -m tools.check_macos --display-id DISPLAY_ID --cycles 100 --idle-seconds 10
+```
+
+Für sichtbare Tests erst entsperren und die aktuelle Monitoranordnung prüfen; Display-IDs/Koordinaten können sich beim Schließen des Laptop-Displays ändern. Felix möchte den rechten Monitor **24-FHD-144-V2 (2)** verwenden.
+
+## Historischer Nachweis: v0.1.0
 
 Lokal geprüft am 4. Oktober 2026 auf Apple Silicon, macOS 27.0.1, Python 3.14.7 und PyObjC 12.2.2. Der erste Download-Build benötigt **macOS 26 oder neuer und arm64**. Die native Oberfläche selbst verwendet APIs ab macOS 12; ein anderer Python-Build kann ältere Systeme unterstützen, wurde hier aber nicht geprüft.
 

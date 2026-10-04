@@ -4,11 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qwerty-menubar"
-version = "0.1.0"
+version = "0.2.0"
 description = "A quiet, native macOS menu-bar QWERTY keyboard reference."
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["pyobjc-framework-Cocoa>=12.2,<13; sys_platform == 'darwin'"]
+dependencies = [
+    "pyobjc-framework-Cocoa>=12.2,<13; sys_platform == 'darwin'",
+    "pyobjc-framework-ServiceManagement>=12.2,<13; sys_platform == 'darwin'",
+]
 
 [project.scripts]
 qwerty-menubar = "qwerty_menubar.app:main"

@@ -1,4 +1,4 @@
-"""Native AppKit menu-bar UI. No timers, keyboard hooks, or network activity."""
+"""Native, event-driven menu-bar UI. No polling or network activity."""
 
 import fcntl
 from pathlib import Path
@@ -8,14 +8,15 @@ from AppKit import (
     NSApp,
     NSApplication,
     NSApplicationActivationPolicyAccessory,
+    NSButton,
+    NSColor,
+    NSFont,
     NSImage,
     NSImageAlignCenter,
     NSImageScaleProportionallyUpOrDown,
     NSImageView,
     NSMakeRect,
     NSMakeSize,
-    NSMenu,
-    NSMenuItem,
     NSObject,
     NSPopover,
     NSPopoverBehaviorTransient,
@@ -23,23 +24,23 @@ from AppKit import (
     NSRightMouseUp,
     NSScreen,
     NSStatusBar,
+    NSTextField,
     NSVariableStatusItemLength,
     NSView,
     NSViewController,
 )
 from Foundation import NSBundle
 
+from qwerty_menubar.constants import BUNDLE_ID, HEADER_HEIGHT
 from qwerty_menubar.layout import PADDING, asset_path, popover_size
-
-BUNDLE_ID = "dev.zimfelix.qwerty-menubar"
-APP_NAME = "QWERTY Menu Bar"
+from qwerty_menubar.settings import SettingsMenu
 
 
 class AppDelegate(NSObject):
     def applicationDidFinishLaunching_(self, notification):
         if hasattr(self, "status_item"):
             return
-        self.popover = None
+        self.popover, self.last_screen = None, None
         self._create_status_item()
         self._create_menu()
 
@@ -59,7 +60,7 @@ class AppDelegate(NSObject):
         icon.setSize_(NSMakeSize(22, 16))
         icon.setTemplate_(True)
         button.setImage_(icon)
-        button.setToolTip_("QWERTY-Tastatur · Klick zum Anzeigen · Rechtsklick zum Beenden")
+        button.setToolTip_("QWERTY-Tastatur · Klick zum Anzeigen · Rechtsklick für Einstellungen")
         button.setAccessibilityLabel_("QWERTY-Tastatur")
         button.setTarget_(self)
         button.setAction_("toggleKeyboard:")
@@ -67,14 +68,8 @@ class AppDelegate(NSObject):
 
     @objc.python_method
     def _create_menu(self):
-        self.menu = NSMenu.alloc().initWithTitle_(APP_NAME)
-        title = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(APP_NAME, None, "")
-        title.setEnabled_(False)
-        self.menu.addItem_(title)
-        self.menu.addItem_(NSMenuItem.separatorItem())
-        quit_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("Beenden", "quit:", "q")
-        quit_item.setTarget_(self)
-        self.menu.addItem_(quit_item)
+        self.settings = SettingsMenu.alloc().init().configure(self)
+        self.menu = self.settings.menu
 
     @objc.python_method
     def _create_popover(self):
@@ -93,26 +88,87 @@ class AppDelegate(NSObject):
         controller = NSViewController.alloc().init()
         controller.setView_(NSView.alloc().initWithFrame_(NSMakeRect(0, 0, 1, 1)))
         controller.view().addSubview_(self.image_view)
+        self.header_label = NSTextField.labelWithString_("QWERTY")
+        self.header_label.setFont_(NSFont.systemFontOfSize_(12))
+        self.header_label.setTextColor_(NSColor.secondaryLabelColor())
+        controller.view().addSubview_(self.header_label)
+        self.settings_button = NSButton.alloc().initWithFrame_(NSMakeRect(0, 0, 26, 26))
+        self.settings_button.setImage_(
+            NSImage.imageWithSystemSymbolName_accessibilityDescription_(
+                "gearshape", "Einstellungen"
+            )
+        )
+        self.settings_button.setBordered_(False)
+        self.settings_button.setContentTintColor_(NSColor.secondaryLabelColor())
+        self.settings_button.setToolTip_("Einstellungen")
+        self.settings_button.setAccessibilityLabel_("Einstellungen")
+        self.settings_button.setTarget_(self)
+        self.settings_button.setAction_("showSettings:")
+        controller.view().addSubview_(self.settings_button)
         self.popover.setContentViewController_(controller)
 
     @objc.python_method
     def _resize_popover(self):
-        screen = self.status_item.button().window().screen() or NSScreen.mainScreen()
-        width, height = popover_size(screen.visibleFrame().size.width)
+        width, image_height = popover_size(self.display_screen().visibleFrame().size.width)
+        height = image_height + HEADER_HEIGHT
         self.popover.setContentSize_(NSMakeSize(width, height))
         self.image_view.setFrame_(
-            NSMakeRect(PADDING, PADDING, width - 2 * PADDING, height - 2 * PADDING)
+            NSMakeRect(PADDING, PADDING, width - 2 * PADDING, image_height - 2 * PADDING)
         )
+        self.header_label.setFrame_(NSMakeRect(PADDING, height - 30, 160, 20))
+        self.settings_button.setFrame_(NSMakeRect(width - PADDING - 26, height - 32, 26, 26))
+
+    @objc.python_method
+    def display_screen(self):
+        if self.popover and self.popover.isShown():
+            window = self.image_view.window()
+            if window is not None and window.screen():
+                return window.screen()
+        if self.last_screen:
+            identifier = self.last_screen.deviceDescription()["NSScreenNumber"]
+            self.last_screen = next(
+                (
+                    screen
+                    for screen in NSScreen.screens()
+                    if screen.deviceDescription()["NSScreenNumber"] == identifier
+                ),
+                None,
+            )
+        status_window = self.status_item.button().window()
+        return (
+            self.last_screen
+            or (status_window.screen() if status_window else None)
+            or NSScreen.mainScreen()
+        )
+
+    def showSettings_(self, sender):
+        self.settings.show(sender)
 
     def toggleKeyboard_(self, sender):
         event = NSApp.currentEvent()
         if event is not None and event.type() == NSRightMouseUp:
             if self.popover:
                 self.popover.performClose_(sender)
+            self.settings.refresh()
             self.status_item.popUpStatusItemMenu_(self.menu)
             return
+        self._toggle_keyboard()
+
+    @objc.python_method
+    def _hotkey_pressed(self):
+        editor = self.settings.shortcut_window
+        if editor and editor.panel.isVisible():
+            if editor.recorder.recording:
+                editor.cancel_recording()
+                editor.set_feedback("Diese Kombination ist bereits dein aktives Tastenkürzel.")
+                return
+            editor.panel.close()
+        self._toggle_keyboard()
+
+    @objc.python_method
+    def _toggle_keyboard(self):
         if self.popover and self.popover.isShown():
-            self.popover.performClose_(sender)
+            self.popover.performClose_(None)
             return
         if self.popover is None:
             self._create_popover()
@@ -126,11 +182,15 @@ class AppDelegate(NSObject):
     def popoverDidShow_(self, notification):
         window = self.popover.contentViewController().view().window()
         if window is not None:
+            self.last_screen = window.screen()
             window.makeKeyWindow()
 
     def popoverDidClose_(self, notification):
-        # Returning focus avoids stealing keyboard input after the reference closes.
-        NSApp.hide_(None)
+        if not self.settings.has_auxiliary_window():
+            NSApp.hide_(None)
+
+    def applicationWillTerminate_(self, notification):
+        self.settings.close()
 
     def quit_(self, sender):
         NSApp.terminate_(sender)
